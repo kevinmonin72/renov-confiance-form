@@ -226,16 +226,26 @@ export default async function handler(req, res) {
       dealId = `deal_free_${Math.floor(100000 + Math.random() * 900000)}`;
     } else {
       try {
+        // Mapping direct vers les IDs des étapes réelles du pipeline HubSpot (Pipeline Ventes Locataires)
+        const stageMapping = {
+          'appointmentscheduled': '6224517360', // Nouveau Prospect
+          'qualifiedtobuy': '6224517361',       // RDV
+          'decisionmakerboughtin': '6224517362',// En attente de décision
+          'closedwon': '6224517363',            // gagné
+          'closedlost': '6224517364'            // perdu
+        };
+        const targetStage = stageMapping[pipelineData.dealStage] || pipelineData.dealStage || '6224517360';
+
         const dealProperties = {
           dealname: pipelineData.dealName,
-          pipeline: pipelineId,
-          dealstage: pipelineData.dealStage,
+          pipeline: pipelineId || 'default',
+          dealstage: targetStage,
           amount: String(pipelineData.amount),
           closedate: closeDate.toISOString(),
           description: dealDescription
         };
 
-        const createDealRes = await fetch(hubspotUrl('/crm/v3/objects/deals'), {
+        let createDealRes = await fetch(hubspotUrl('/crm/v3/objects/deals'), {
           method: 'POST',
           headers: hubspotHeaders,
           body: JSON.stringify({ properties: dealProperties })
@@ -245,7 +255,19 @@ export default async function handler(req, res) {
           const dealData = await createDealRes.json();
           dealId = dealData.id;
         } else {
-          dealId = `deal_free_${Math.floor(100000 + Math.random() * 900000)}`;
+          // Si rejet de l'étape, repli sur la première étape du pipeline
+          dealProperties.dealstage = '6224517360';
+          createDealRes = await fetch(hubspotUrl('/crm/v3/objects/deals'), {
+            method: 'POST',
+            headers: hubspotHeaders,
+            body: JSON.stringify({ properties: dealProperties })
+          });
+          if (createDealRes.ok) {
+            const dealData = await createDealRes.json();
+            dealId = dealData.id;
+          } else {
+            dealId = `deal_free_${Math.floor(100000 + Math.random() * 900000)}`;
+          }
         }
 
         // C. Association Deal -> Contact & Notes
