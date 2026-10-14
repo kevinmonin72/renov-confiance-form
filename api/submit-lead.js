@@ -86,11 +86,18 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Appel réel à l'API HubSpot v3 CRM
+    // 3. Appel réel à l'API HubSpot v3 CRM (Support Private App Bearer & hapikey)
+    const isPrivateApp = hubspotToken.startsWith('pat-');
     const hubspotHeaders = {
-      'Authorization': `Bearer ${hubspotToken}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(isPrivateApp ? { 'Authorization': `Bearer ${hubspotToken}` } : {})
     };
+
+    function hubspotUrl(path) {
+      if (isPrivateApp) return `https://api.hubapi.com${path}`;
+      const sep = path.includes('?') ? '&' : '?';
+      return `https://api.hubapi.com${path}${sep}hapikey=${encodeURIComponent(hubspotToken)}`;
+    }
 
     // A. Recherche ou Création du Contact
     let contactId = null;
@@ -102,11 +109,10 @@ export default async function handler(req, res) {
       city: city.trim(),
       zip: postalCode.trim(),
       hs_lead_status: pipelineData.leadStatus,
-      // Note : champs standards HubSpot pour éviter les erreurs de propriétés personnalisées non créées
       message: `[Rénov.Confiance] Projet: ${propertyType} (${surface ? surface + 'm²' : 'N/C'}) - DPE: ${dpeRating} - Étape déduite: ${pipelineData.stageLabel}`
     };
 
-    const createContactRes = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+    const createContactRes = await fetch(hubspotUrl('/crm/v3/objects/contacts'), {
       method: 'POST',
       headers: hubspotHeaders,
       body: JSON.stringify({ properties: contactProperties })
@@ -125,7 +131,7 @@ export default async function handler(req, res) {
           contactId = existingIdMatch[1];
         } else {
           // Recherche par email
-          const searchRes = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
+          const searchRes = await fetch(hubspotUrl('/crm/v3/objects/contacts/search'), {
             method: 'POST',
             headers: hubspotHeaders,
             body: JSON.stringify({
@@ -148,7 +154,7 @@ export default async function handler(req, res) {
 
         // Mise à jour du contact existant
         if (contactId) {
-          await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`, {
+          await fetch(hubspotUrl(`/crm/v3/objects/contacts/${contactId}`), {
             method: 'PATCH',
             headers: hubspotHeaders,
             body: JSON.stringify({ properties: contactProperties })
@@ -191,7 +197,7 @@ export default async function handler(req, res) {
       description: dealDescription
     };
 
-    const createDealRes = await fetch('https://api.hubapi.com/crm/v3/objects/deals', {
+    const createDealRes = await fetch(hubspotUrl('/crm/v3/objects/deals'), {
       method: 'POST',
       headers: hubspotHeaders,
       body: JSON.stringify({ properties: dealProperties })
@@ -207,7 +213,7 @@ export default async function handler(req, res) {
       // Fallback : si le dealstage custom est rejeté, réessayer avec 'appointmentscheduled' standard
       if (dealErr.message && dealErr.message.includes('dealstage')) {
         dealProperties.dealstage = 'appointmentscheduled';
-        const retryRes = await fetch('https://api.hubapi.com/crm/v3/objects/deals', {
+        const retryRes = await fetch(hubspotUrl('/crm/v3/objects/deals'), {
           method: 'POST',
           headers: hubspotHeaders,
           body: JSON.stringify({ properties: dealProperties })
@@ -221,13 +227,13 @@ export default async function handler(req, res) {
 
     // C. Association Deal -> Contact dans HubSpot
     if (dealId && contactId) {
-      await fetch(`https://api.hubapi.com/crm/v3/objects/deals/${dealId}/associations/contacts/${contactId}/deal_to_contact`, {
+      await fetch(hubspotUrl(`/crm/v3/objects/deals/${dealId}/associations/contacts/${contactId}/deal_to_contact`), {
         method: 'PUT',
         headers: hubspotHeaders
       }).catch(err => console.warn('Erreur association deal-contact:', err));
 
       // D. Création d'une Note / Timeline liée au contact et au deal
-      await fetch('https://api.hubapi.com/crm/v3/objects/notes', {
+      await fetch(hubspotUrl('/crm/v3/objects/notes'), {
         method: 'POST',
         headers: hubspotHeaders,
         body: JSON.stringify({

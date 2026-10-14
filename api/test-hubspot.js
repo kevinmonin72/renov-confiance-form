@@ -25,15 +25,32 @@ export default async function handler(req, res) {
   }
 
   try {
-    const pipelinesRes = await fetch('https://api.hubapi.com/crm/v3/pipelines/deals', {
+    let pipelinesRes = await fetch('https://api.hubapi.com/crm/v3/pipelines/deals', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
 
+    if (!pipelinesRes.ok && (token.startsWith('eu1-') || token.startsWith('na1-') || !token.startsWith('pat-'))) {
+      const fallback = await fetch(`https://api.hubapi.com/crm/v3/pipelines/deals?hapikey=${encodeURIComponent(token)}`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (fallback.ok || fallback.status === 403) {
+        pipelinesRes = fallback;
+      }
+    }
+
     if (!pipelinesRes.ok) {
       const err = await pipelinesRes.json().catch(() => ({}));
+      if (err.category === 'MISSING_SCOPES' || pipelinesRes.status === 403) {
+        return res.status(403).json({
+          connected: false,
+          status: 'MISSING_SCOPES',
+          message: 'Clé HubSpot reconnue avec succès, mais les permissions (Scopes) Contacts et Deals doivent être cochées dans HubSpot.',
+          instructions: 'Dans HubSpot > Paramètres > Applications privées > onglet "Portées (Scopes)" > cochez crm.objects.contacts (read/write) et crm.objects.deals (read/write).'
+        });
+      }
       return res.status(401).json({
         connected: false,
         error: `Échec d'authentification HubSpot (${pipelinesRes.status}) : ${err.message || 'Token invalide ou permissions insuffisantes'}`

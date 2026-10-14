@@ -91,19 +91,38 @@ export default async function handler(req, res) {
 
       const cleanToken = token.trim();
 
-      // 1. Validation immédiate avec l'API HubSpot
-      const verifyRes = await fetch('https://api.hubapi.com/crm/v3/pipelines/deals', {
+      // 1. Validation immédiate avec l'API HubSpot (essai Bearer puis hapikey)
+      let verifyRes = await fetch('https://api.hubapi.com/crm/v3/pipelines/deals', {
         headers: {
           'Authorization': `Bearer ${cleanToken}`,
           'Content-Type': 'application/json'
         }
       });
 
+      if (!verifyRes.ok && (cleanToken.startsWith('eu1-') || cleanToken.startsWith('na1-') || !cleanToken.startsWith('pat-'))) {
+        // Tentative via paramètre d'URL hapikey
+        const fallbackRes = await fetch(`https://api.hubapi.com/crm/v3/pipelines/deals?hapikey=${encodeURIComponent(cleanToken)}`, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (fallbackRes.ok || fallbackRes.status === 403) {
+          verifyRes = fallbackRes;
+        }
+      }
+
       if (!verifyRes.ok) {
         const errData = await verifyRes.json().catch(() => ({}));
+        
+        if (errData.category === 'MISSING_SCOPES' || verifyRes.status === 403) {
+          return res.status(400).json({
+            error: `Votre clé HubSpot a bien été reconnue, mais il lui manque les autorisations (Scopes) Contacts et Deals !`,
+            category: 'MISSING_SCOPES',
+            hint: 'Rendez-vous dans HubSpot > Paramètres ⚙️ > Intégrations > Applications privées > cliquez sur votre application > onglet "Portées (Scopes)" > cochez crm.objects.contacts (read/write) et crm.objects.deals (read/write) > cliquez sur Enregistrer.'
+          });
+        }
+
         return res.status(400).json({
-          error: `Échec d'authentification HubSpot (${verifyRes.status}) : ${errData.message || 'Jeton invalide ou permissions insuffisantes'}.`,
-          hint: 'Vérifiez que votre Private App possède bien les scopes crm.objects.contacts.read/write et crm.objects.deals.read/write.'
+          error: `Échec d'authentification HubSpot (${verifyRes.status}) : ${errData.message || 'Jeton invalide'}.`,
+          hint: 'Vérifiez que votre jeton Private App commence par pat-eu1-... et qu\'il a bien été copié en entier.'
         });
       }
 
