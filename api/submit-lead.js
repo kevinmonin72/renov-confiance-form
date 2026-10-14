@@ -177,6 +177,31 @@ export default async function handler(req, res) {
               body: JSON.stringify({ properties: contactProperties })
             }).catch(() => {});
           }
+        } else if (createContactRes.status === 400) {
+          console.warn('⚠️ Erreur de validation de propriété (400), réessai avec propriétés universelles...');
+          const retryRes = await fetch(hubspotUrl('/crm/v3/objects/contacts'), {
+            method: 'POST',
+            headers: hubspotHeaders,
+            body: JSON.stringify({
+              properties: {
+                email: email.trim().toLowerCase(),
+                firstname: firstname.trim(),
+                lastname: lastname.trim(),
+                phone: phone.trim(),
+                city: city.trim(),
+                zip: postalCode.trim(),
+                message: contactProperties.message
+              }
+            })
+          });
+          if (retryRes.ok) {
+            const retryData = await retryRes.json();
+            contactId = retryData.id;
+          } else {
+            isBypassed = true;
+            bypassReason = 'Validation contact HubSpot';
+            contactId = `hs_free_${Math.floor(100000 + Math.random() * 900000)}`;
+          }
         } else if (createContactRes.status === 403 || errJson.category === 'MISSING_SCOPES' || (errJson.message && errJson.message.includes('scope'))) {
           // CONTOURNEMENT DU PLAN GRATUIT / CLÉ SANS SCOPES
           console.log('⚡ [HubSpot Bypass] Plan Gratuit / Scopes insuffisants détectés (403). Contournement automatique activé.');
@@ -409,7 +434,7 @@ function computeStealthPipelineStage({ projectStageAnswer, timeframe, occupancyS
 
     case 'pret_a_demarrer':
       dealStage = 'decisionmakerboughtin';
-      leadStatus = 'HOT';
+      leadStatus = 'OPEN_DEAL';
       stageLabel = 'Projet Financé — Cadrage Architecte & Lancement';
       priority = 'VERY_HIGH';
       daysToClose = 14;
@@ -418,7 +443,7 @@ function computeStealthPipelineStage({ projectStageAnswer, timeframe, occupancyS
 
     case 'deficit_foncier':
       dealStage = 'qualifiedtobuy';
-      leadStatus = 'QUALIFIED_PATRIMONIAL';
+      leadStatus = 'IN_PROGRESS';
       stageLabel = 'Investisseur Patrimonial — Déficit Foncier 21 400 €';
       priority = 'HIGH';
       daysToClose = 25;
@@ -429,14 +454,14 @@ function computeStealthPipelineStage({ projectStageAnswer, timeframe, occupancyS
     default:
       if (timeframe === 'immediat' || occupancyStatus === 'vacant') {
         dealStage = 'appointmentscheduled';
-        leadStatus = 'OPEN_URGENT';
+        leadStatus = 'OPEN';
         stageLabel = 'Passoire Vacante — Urgence Relocation & Aides';
         priority = 'HIGH';
         daysToClose = 21;
         justification = 'Le bien est vacant ou le départ est imminent. Urgence légale de rénover pour éviter la vacance locative.';
       } else {
         dealStage = 'appointmentscheduled';
-        leadStatus = 'OPEN';
+        leadStatus = 'NEW';
         stageLabel = 'Sensibilisation DPE & Montage des Aides';
         priority = (timeframe === '1_3_mois') ? 'MEDIUM' : 'NORMAL';
         daysToClose = 45;
