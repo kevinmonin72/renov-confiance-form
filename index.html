@@ -72,7 +72,6 @@
       background-color: #FEF2F2;
       box-shadow: 0 0 0 1.5px #E60023;
     }
-    /* Masquer la barre de scroll tout en gardant le défilement */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -85,16 +84,16 @@
 <body class="h-full flex flex-col font-sans text-neutral-900 antialiased bg-[#FAFAFA] selection:bg-pin selection:text-white">
 
   <!-- ================= TOP PROGRESS BAR (STYLE TALLY) ================= -->
-  <div class="fixed top-0 left-0 w-full h-1 bg-neutral-200/70 z-50">
+  <div id="topProgressBarWrapper" class="fixed top-0 left-0 w-full h-1 bg-neutral-200/70 z-50">
     <div id="topProgressBar" class="h-full bg-pin transition-all duration-300 ease-out" style="width: 14%;"></div>
   </div>
 
-  <!-- ================= HEADER ÉPURÉ ================= -->
+  <!-- ================= HEADER AVEC ONGLETS NAVIGATION ================= -->
   <header class="w-full border-b border-neutral-200/70 bg-white/80 backdrop-blur-md sticky top-0 z-40">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       
       <!-- Brand Logo -->
-      <div class="flex items-center gap-2.5">
+      <div onclick="switchMainTab('form')" class="flex items-center gap-2.5 cursor-pointer select-none">
         <div class="w-9 h-9 rounded-xl bg-pin flex items-center justify-center text-white shadow-sm shadow-pin/30">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -109,28 +108,31 @@
         </div>
       </div>
 
-      <!-- Live Badges & HubSpot Status Indicator -->
-      <div class="flex items-center gap-2 sm:gap-3 text-xs">
+      <!-- Onglets de Navigation Principaux (Formulaire vs Paramètres CRM) -->
+      <div class="flex items-center gap-2 text-xs">
         
-        <!-- Badge étape -->
-        <div class="px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 font-semibold text-[11px] flex items-center gap-1.5">
-          <span id="stepCounterLabel">Question 1 sur 7</span>
+        <div class="flex items-center gap-1 p-1 bg-neutral-100 rounded-xl border border-neutral-200">
+          <button id="tabBtnForm" onclick="switchMainTab('form')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-neutral-900 shadow-2xs flex items-center gap-1.5">
+            <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-pin"></i>
+            <span>Formulaire</span>
+          </button>
+          
+          <button id="tabBtnSettings" onclick="switchMainTab('settings')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-neutral-600 hover:text-neutral-900 flex items-center gap-1.5">
+            <i data-lucide="settings" class="w-3.5 h-3.5 text-neutral-500"></i>
+            <span>Paramètres CRM</span>
+            <span id="headerCrmDot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse" title="Statut de connexion HubSpot"></span>
+          </button>
         </div>
-
-        <!-- HubSpot Sync Status Indicator -->
-        <button onclick="toggleHubspotModal()" title="Paramètres et diagnostic API HubSpot" class="group flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-[11px] hover:bg-emerald-100 transition-all cursor-pointer">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>HubSpot CRM</span>
-          <i data-lucide="settings-2" class="w-3 h-3 text-emerald-600 group-hover:rotate-45 transition-transform"></i>
-        </button>
 
       </div>
     </div>
   </header>
 
-  <!-- ================= CORPS DU FORMULAIRE (TYPE TALLY) ================= -->
+  <!-- ================= MAIN CONTAINER ================= -->
   <main class="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 py-8 sm:py-12">
-    <div class="w-full max-w-xl mx-auto">
+    
+    <!-- ================= VUE 1 : FORMULAIRE TALLY INTERACTIF ================= -->
+    <div id="viewForm" class="w-full max-w-xl mx-auto">
       
       <!-- FORM WRAPPER -->
       <form id="tallyForm" onsubmit="event.preventDefault();" class="w-full">
@@ -657,107 +659,220 @@
       </div>
 
     </div>
-  </main>
 
-  <!-- ================= MODAL DE RÉGLAGE & TESTEUR HUBSPOT ================= -->
-  <div id="hubspotModal" class="hidden fixed inset-0 z-50 bg-neutral-950/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-neutral-200 space-y-5 animate-in fade-in zoom-in-95 duration-200 text-xs">
+    <!-- ================= VUE 2 : ONGLET PARAMÈTRES & CONNEXION CRM GLOBALE ================= -->
+    <div id="viewSettings" class="w-full max-w-2xl mx-auto hidden space-y-6">
       
-      <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
-            <i data-lucide="plug" class="w-4 h-4"></i>
-          </div>
-          <div>
-            <h3 class="font-extrabold text-neutral-900 text-sm">Configuration API HubSpot CRM</h3>
-            <span class="text-[11px] text-neutral-500">Test de connexion et Private App Token</span>
-          </div>
+      <!-- En-tête Paramètres -->
+      <div class="space-y-1 text-center sm:text-left">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200 text-xs font-bold mb-1">
+          <i data-lucide="sliders" class="w-3.5 h-3.5 text-neutral-600"></i>
+          <span>Configuration Serveur &amp; API</span>
         </div>
-        <button onclick="toggleHubspotModal()" class="text-neutral-400 hover:text-neutral-700 p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight">
+          Connexion HubSpot CRM (Activation Globale)
+        </h1>
+        <p class="text-sm text-neutral-500 leading-relaxed">
+          Renseignez ici votre jeton d'application privée HubSpot. Dès qu'il est enregistré, il s'applique <strong>automatiquement à toutes les connexions et soumissions de formulaires de tous les visiteurs du site</strong>.
+        </p>
       </div>
 
-      <div class="space-y-3 text-neutral-600 leading-relaxed">
-        <p>
-          Ce formulaire est conçu pour pousser en direct les contacts et transactions dans votre compte <strong>HubSpot CRM v3</strong>.
-        </p>
-
-        <div class="space-y-1.5">
-          <label class="block font-bold text-neutral-800 text-[11px] uppercase tracking-wide">
-            Jeton d'application privée HubSpot (Private App Token) :
-          </label>
-          <input type="password" id="customHubspotToken" placeholder="pat-eu1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs font-mono focus:ring-2 focus:ring-pin focus:outline-none">
-          <span class="text-[10px] text-neutral-400 block">
-            Laissez vide pour utiliser la variable d'environnement serveur <code class="font-mono text-neutral-700 bg-neutral-100 px-1 py-0.5 rounded">HUBSPOT_ACCESS_TOKEN</code> ou le mode simulation automatique.
+      <!-- CARTE 1 : STATUT EN DIRECT DU CRM -->
+      <div class="p-5 sm:p-6 rounded-3xl bg-white border border-neutral-200 shadow-sm space-y-4 text-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 pb-4">
+          <div class="flex items-center gap-3">
+            <div id="crmStatusIconBg" class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+              <i data-lucide="activity" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase font-bold text-neutral-400 block">État de l'intégration</span>
+              <div id="crmStatusTitle" class="font-bold text-neutral-900 text-sm">Vérification en cours...</div>
+            </div>
+          </div>
+          <span id="crmStatusPill" class="px-3 py-1 rounded-full bg-neutral-100 text-neutral-600 font-mono font-bold text-[11px] self-start sm:self-auto">
+            Chargement...
           </span>
         </div>
 
-        <!-- Bouton Test de Connexion Directe -->
-        <div class="pt-1 flex items-center gap-2">
-          <button type="button" onclick="testHubspotConnection()" id="btnTestHubspot" class="px-4 py-2 rounded-xl bg-neutral-900 text-white font-bold hover:bg-neutral-800 transition-all flex items-center gap-1.5">
-            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-            <span>Tester la connexion HubSpot</span>
-          </button>
-          <button type="button" onclick="saveCustomToken()" class="px-3.5 py-2 rounded-xl bg-neutral-100 text-neutral-800 font-bold hover:bg-neutral-200 transition-all">
-            Enregistrer pour ce test
-          </button>
-        </div>
-
-        <!-- Résultat du test -->
-        <div id="hubspotTestResult" class="hidden p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-[11px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-neutral-700">
+          <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+            <span class="text-[10px] uppercase font-bold text-neutral-400 block">Jeton Serveur Actif</span>
+            <span id="crmMaskedToken" class="font-mono font-bold text-neutral-800 text-xs">Aucun (Mode Démo)</span>
+          </div>
+          <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+            <span class="text-[10px] uppercase font-bold text-neutral-400 block">Pipeline de Vente</span>
+            <span id="crmPipelineName" class="font-bold text-neutral-800 text-xs">Par défaut ("default")</span>
+          </div>
+          <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-200/80">
+            <span class="text-[10px] uppercase font-bold text-neutral-400 block">Portée</span>
+            <span class="font-bold text-emerald-700 text-xs flex items-center gap-1">
+              <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+              <span>Tout le site (100% visiteurs)</span>
+            </span>
+          </div>
         </div>
       </div>
 
-      <div class="pt-2 border-t border-neutral-100 flex justify-end">
-        <button onclick="toggleHubspotModal()" class="px-4 py-2 rounded-xl bg-neutral-100 font-bold text-neutral-700 hover:bg-neutral-200 transition-all">
-          Fermer
+      <!-- CARTE 2 : FORMULAIRE DE SAISIE DU TOKEN -->
+      <div class="p-5 sm:p-6 rounded-3xl bg-white border border-neutral-200 shadow-sm space-y-4 text-xs">
+        <div class="border-b border-neutral-100 pb-3 flex items-center justify-between">
+          <h2 class="font-bold text-neutral-900 text-sm flex items-center gap-2">
+            <i data-lucide="key" class="w-4 h-4 text-pin"></i>
+            <span>Enregistrer la clé API HubSpot pour le site</span>
+          </h2>
+          <span class="text-[11px] text-neutral-400">Authentification CRM v3</span>
+        </div>
+
+        <div class="space-y-3.5">
+          <div>
+            <label class="block font-bold text-neutral-800 text-[11px] uppercase tracking-wide mb-1">
+              Jeton d'application privée HubSpot (Private App Token) :
+            </label>
+            <div class="relative">
+              <input type="password" id="inputGlobalToken" placeholder="pat-eu1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="w-full px-4 py-3 rounded-xl border border-neutral-200 text-xs font-mono focus:ring-2 focus:ring-pin focus:outline-none transition-all pr-12">
+              <button type="button" onclick="toggleTokenVisibility()" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1">
+                <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <span class="text-[11px] text-neutral-400 mt-1 block">
+              Le jeton commence généralement par <code class="font-mono text-neutral-700 bg-neutral-100 px-1 py-0.5 rounded">pat-eu1-</code> ou <code class="font-mono text-neutral-700 bg-neutral-100 px-1 py-0.5 rounded">pat-na1-</code>.
+            </span>
+          </div>
+
+          <div>
+            <label class="block font-bold text-neutral-800 text-[11px] uppercase tracking-wide mb-1">
+              ID du Pipeline HubSpot Deals (Optionnel) :
+            </label>
+            <input type="text" id="inputPipelineId" placeholder="default" value="default" class="w-full px-4 py-3 rounded-xl border border-neutral-200 text-xs font-mono focus:ring-2 focus:ring-pin focus:outline-none transition-all">
+            <span class="text-[11px] text-neutral-400 mt-1 block">
+              Laissez <code class="font-mono text-neutral-700 bg-neutral-100 px-1 py-0.5 rounded">default</code> pour utiliser le pipeline standard des transactions HubSpot.
+            </span>
+          </div>
+
+          <!-- Boutons d'Action -->
+          <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button type="button" id="btnSaveConfig" onclick="saveGlobalConfig()" class="px-5 py-3 rounded-xl bg-pin text-white font-bold text-xs hover:bg-pin-hover transition-all flex items-center justify-center gap-2 shadow-sm shadow-pin/20 cursor-pointer">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              <span>🚀 Enregistrer &amp; Activer pour tout le site</span>
+            </button>
+
+            <button type="button" id="btnTestConfig" onclick="testGlobalConfig()" class="px-4 py-3 rounded-xl bg-neutral-900 text-white font-bold text-xs hover:bg-neutral-800 transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Tester sans sauvegarder</span>
+            </button>
+
+            <button type="button" id="btnDisconnectConfig" onclick="disconnectGlobalConfig()" class="px-3.5 py-3 rounded-xl border border-neutral-200 text-neutral-600 font-bold text-xs hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+              <span>Déconnecter</span>
+            </button>
+          </div>
+
+          <!-- Boîte de journal console du résultat -->
+          <div id="configFeedbackBox" class="hidden p-4 rounded-2xl bg-neutral-900 text-white font-mono text-[11px] space-y-2 whitespace-pre-wrap max-h-48 overflow-y-auto">
+          </div>
+        </div>
+      </div>
+
+      <!-- CARTE 3 : GUIDE RAPIDE HUBSPOT -->
+      <div class="p-5 sm:p-6 rounded-3xl bg-neutral-50 border border-neutral-200 text-xs space-y-3">
+        <div class="font-bold text-neutral-900 text-xs flex items-center gap-2">
+          <i data-lucide="help-circle" class="w-4 h-4 text-blue-600"></i>
+          <span>Où trouver votre jeton dans HubSpot en 2 minutes ?</span>
+        </div>
+        <ol class="space-y-1.5 text-neutral-600 pl-4 list-decimal text-[11.5px] leading-relaxed">
+          <li>Allez dans votre compte <strong>HubSpot</strong> &gt; <strong>Paramètres (icône roue crantée ⚙️ en haut à droite)</strong>.</li>
+          <li>Dans le menu de gauche, rendez-vous dans <strong>Intégrations</strong> &gt; <strong>Applications privées</strong>.</li>
+          <li>Cliquez sur <strong>Créer une application privée</strong> (nommez-la *"Rénov.Confiance"*).</li>
+          <li>Dans l'onglet <strong>Portées (Scopes)</strong>, cochez :
+            <span class="inline-block font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-neutral-200 text-neutral-800 font-bold ml-1">crm.objects.contacts.read/write</span> et
+            <span class="inline-block font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-neutral-200 text-neutral-800 font-bold ml-1">crm.objects.deals.read/write</span>.
+          </li>
+          <li>Cliquez sur <strong>Créer l'application</strong>, copiez le jeton <code class="font-mono bg-white px-1 py-0.5 rounded">pat-...</code> et collez-le ci-dessus !</li>
+        </ol>
+      </div>
+
+      <!-- Bouton Retour Formulaire -->
+      <div class="text-center pt-2">
+        <button type="button" onclick="switchMainTab('form')" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-neutral-200 text-neutral-800 font-bold text-xs hover:bg-neutral-50 shadow-2xs transition-all">
+          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+          <span>Retourner au Formulaire pour tester une soumission</span>
         </button>
       </div>
 
     </div>
-  </div>
 
-  <!-- ================= SCRIPTS JS (NAVIGATION, RACCOURCIS CLAVIER, SYNCHRO HUBSPOT) ================= -->
+  </main>
+
+  <!-- ================= SCRIPTS JS (NAVIGATION, TABS, HUBSPOT SYNC GLOBAL) ================= -->
   <script>
     // État du Formulaire
     const formState = {
       currentStep: 1,
-      totalSteps: 7, // Les étapes 1 à 7 sont le questionnaire, l'étape 8 est l'écran de résultat
+      totalSteps: 7,
       propertyType: 'Appartement',
       postalCode: '',
       city: '',
       occupancyStatus: 'loue',
       dpeRating: 'G',
       surface: '',
-      projectStageAnswer: 'devis_recus', // Option subtile par défaut
+      projectStageAnswer: 'devis_recus',
       timeframe: '1_3_mois',
       budget: '25000_50000',
       firstname: '',
       lastname: '',
       email: '',
-      phone: '',
-      tokenOverride: sessionStorage.getItem('renov_hubspot_token') || null
+      phone: ''
     };
 
     // Initialisation
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       updateProgress();
+      checkGlobalCrmStatus();
 
       // Gestionnaire clavier global (Style Tally / Typeform)
       window.addEventListener('keydown', handleKeyNavigation);
 
-      // Charger le token custom sauvegardé si présent
-      if (formState.tokenOverride) {
-        const input = document.getElementById('customHubspotToken');
-        if (input) input.value = formState.tokenOverride;
+      // Gestion de l'URL hash (#settings ou #form)
+      if (window.location.hash === '#settings' || window.location.search.includes('tab=settings')) {
+        switchMainTab('settings');
       }
     });
 
+    // ================= GESTION DES ONGLETS PRINCIPAUX =================
+    function switchMainTab(tab) {
+      const viewForm = document.getElementById('viewForm');
+      const viewSettings = document.getElementById('viewSettings');
+      const tabBtnForm = document.getElementById('tabBtnForm');
+      const tabBtnSettings = document.getElementById('tabBtnSettings');
+      const topProgressBar = document.getElementById('topProgressBarWrapper');
+
+      if (tab === 'settings') {
+        viewForm.classList.add('hidden');
+        viewSettings.classList.remove('hidden');
+        topProgressBar.classList.add('opacity-0');
+
+        tabBtnSettings.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-neutral-900 shadow-2xs flex items-center gap-1.5';
+        tabBtnForm.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-neutral-600 hover:text-neutral-900 flex items-center gap-1.5';
+        window.location.hash = 'settings';
+        checkGlobalCrmStatus();
+      } else {
+        viewSettings.classList.add('hidden');
+        viewForm.classList.remove('hidden');
+        topProgressBar.classList.remove('opacity-0');
+
+        tabBtnForm.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-neutral-900 shadow-2xs flex items-center gap-1.5';
+        tabBtnSettings.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-neutral-600 hover:text-neutral-900 flex items-center gap-1.5';
+        window.location.hash = 'form';
+      }
+      lucide.createIcons();
+    }
+
     // Navigation clavier fluide
     function handleKeyNavigation(e) {
-      // Ignorer si l'utilisateur est dans un champ de saisie texte (sauf pour la touche Entrée)
+      // Ignorer si l'onglet paramètres est actif
+      if (!document.getElementById('viewSettings').classList.contains('hidden')) return;
+
       const isInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
 
       if (e.key === 'Enter') {
@@ -770,7 +885,6 @@
 
       if (isInput) return;
 
-      // Touches A, B, C, D ou 1, 2, 3, 4 pour sélection rapide
       const key = e.key.toUpperCase();
       const currentCard = document.querySelector(`.step-card[data-step="${formState.currentStep}"]`);
       if (!currentCard) return;
@@ -780,7 +894,6 @@
 
       if (key in keyIndexMap && choiceButtons[keyIndexMap[key]]) {
         choiceButtons[keyIndexMap[key]].click();
-        // Léger auto-advance après 250ms pour une sensation Tally ultra fluide
         if (formState.currentStep !== 1 && formState.currentStep !== 3 && formState.currentStep !== 7) {
           setTimeout(() => navigateStep(1), 220);
         }
@@ -791,12 +904,10 @@
     function navigateStep(direction) {
       const nextStep = formState.currentStep + direction;
 
-      // Validation avant d'avancer
       if (direction > 0) {
         if (!validateStep(formState.currentStep)) return;
       }
 
-      // Si on valide la dernière étape de saisie -> Soumission API HubSpot
       if (formState.currentStep === formState.totalSteps && direction > 0) {
         submitToHubspot();
         return;
@@ -804,7 +915,6 @@
 
       if (nextStep < 1 || nextStep > 8) return;
 
-      // Animation de transition
       const curCard = document.querySelector(`.step-card[data-step="${formState.currentStep}"]`);
       const nextCard = document.querySelector(`.step-card[data-step="${nextStep}"]`);
 
@@ -813,7 +923,6 @@
         formState.currentStep = nextStep;
         nextCard.classList.add('active');
         
-        // Auto-focus sur le premier input s'il existe
         const firstInput = nextCard.querySelector('input');
         if (firstInput) {
           setTimeout(() => firstInput.focus(), 100);
@@ -824,22 +933,13 @@
       lucide.createIcons();
     }
 
-    // Mise à jour de la barre de progression et des boutons
+    // Mise à jour de la barre de progression
     function updateProgress() {
       const step = formState.currentStep;
       const progressPercent = Math.min(100, Math.round((step / 7) * 100));
 
       const bar = document.getElementById('topProgressBar');
       if (bar) bar.style.width = `${progressPercent}%`;
-
-      const label = document.getElementById('stepCounterLabel');
-      if (label) {
-        if (step <= 7) {
-          label.textContent = `Question ${step} sur 7`;
-        } else {
-          label.textContent = `Dossier finalisé`;
-        }
-      }
 
       const btnPrev = document.getElementById('btnPrev');
       if (btnPrev) {
@@ -862,7 +962,7 @@
       }
     }
 
-    // Validation des données saisies par étape
+    // Validation des données
     function validateStep(step) {
       if (step === 1) {
         const cp = document.getElementById('postalCode').value.trim();
@@ -906,7 +1006,6 @@
       return true;
     }
 
-    // Handlers de sélection visuelle
     function selectPropertyType(type, btn) {
       formState.propertyType = type;
       highlightButton(btn);
@@ -934,7 +1033,7 @@
 
     function selectBudget(bg, btn) {
       formState.budget = bg;
-      highlightButton(bg);
+      highlightButton(btn);
     }
 
     function highlightButton(btn) {
@@ -949,9 +1048,8 @@
       if (check) check.classList.remove('opacity-0');
     }
 
-    // ================= ENVOI VERS L'API HUBSPOT SERVERLESS =================
+    // ================= ENVOI DU LEAD VERS L'API SERVERLESS =================
     async function submitToHubspot() {
-      // Afficher l'état de chargement
       const btnNext = document.getElementById('btnNext');
       const originalText = btnNext.innerHTML;
       btnNext.disabled = true;
@@ -974,8 +1072,7 @@
           surface: formState.surface,
           projectStageAnswer: formState.projectStageAnswer,
           timeframe: formState.timeframe,
-          budget: formState.budget,
-          tokenOverride: formState.tokenOverride
+          budget: formState.budget
         };
 
         const response = await fetch('/api/submit-lead', {
@@ -987,7 +1084,6 @@
         const result = await response.json();
 
         if (response.ok && result.success) {
-          // Affichage de l'étape de succès 8
           const curCard = document.querySelector(`.step-card[data-step="${formState.currentStep}"]`);
           const successCard = document.querySelector('.step-card[data-step="8"]');
           curCard.classList.remove('active');
@@ -995,7 +1091,6 @@
           formState.currentStep = 8;
           updateProgress();
 
-          // Remplissage des détails CRM HubSpot
           document.getElementById('crmContactDisplay').textContent = result.contactId || result.contact?.id || 'ID Créé';
           document.getElementById('crmDealDisplay').textContent = result.dealId || result.deal?.id || 'Deal Créé';
           document.getElementById('crmStageDisplay').textContent = result.pipelineStage || result.deal?.stageLabel || 'Détecté';
@@ -1003,10 +1098,10 @@
 
           const badge = document.getElementById('hubspotBadgeStatus');
           if (result.simulated) {
-            badge.textContent = 'Simulé (Démo active)';
+            badge.textContent = 'Mode Démo (Simulation active)';
             badge.className = 'px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-mono text-[10px]';
           } else {
-            badge.textContent = 'Synchronisé en direct';
+            badge.textContent = 'Synchronisé en Direct CRM';
             badge.className = 'px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono text-[10px]';
           }
 
@@ -1024,7 +1119,6 @@
       }
     }
 
-    // Réinitialisation du formulaire
     function resetForm() {
       document.querySelector('.step-card[data-step="8"]').classList.remove('active');
       document.querySelector('.step-card[data-step="1"]').classList.add('active');
@@ -1034,48 +1128,140 @@
       lucide.createIcons();
     }
 
-    // ================= MODAL DE CONFIGURATION HUBSPOT =================
-    function toggleHubspotModal() {
-      const modal = document.getElementById('hubspotModal');
-      modal.classList.toggle('hidden');
-      lucide.createIcons();
-    }
+    // ================= LOGIQUE DES PARAMÈTRES HUBSPOT GLOBAUX =================
+    
+    // 1. Vérification de l'état du CRM côté serveur
+    async function checkGlobalCrmStatus() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
 
-    function saveCustomToken() {
-      const val = document.getElementById('customHubspotToken').value.trim();
-      if (val) {
-        sessionStorage.setItem('renov_hubspot_token', val);
-        formState.tokenOverride = val;
-        alert('Token temporaire mémorisé pour cette session de test !');
-      } else {
-        sessionStorage.removeItem('renov_hubspot_token');
-        formState.tokenOverride = null;
-        alert('Token effacé. Utilisation de la configuration serveur par défaut.');
+        const dot = document.getElementById('headerCrmDot');
+        const title = document.getElementById('crmStatusTitle');
+        const pill = document.getElementById('crmStatusPill');
+        const iconBg = document.getElementById('crmStatusIconBg');
+        const tokenDisplay = document.getElementById('crmMaskedToken');
+        const pipeDisplay = document.getElementById('crmPipelineName');
+
+        if (data.connected) {
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+          iconBg.className = 'w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold';
+          title.textContent = 'HubSpot CRM Connecté & Actif pour tout le site';
+          pill.className = 'px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-mono font-bold text-[11px]';
+          pill.textContent = 'En ligne (Actif)';
+          tokenDisplay.textContent = data.maskedToken || 'pat-***';
+          pipeDisplay.textContent = `${data.pipelineId} (${data.pipelinesCount || 1} pipeline détecté)`;
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+          iconBg.className = 'w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold';
+          title.textContent = 'Mode Simulation (Jeton non configuré)';
+          pill.className = 'px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-mono font-bold text-[11px]';
+          pill.textContent = 'Mode Démo';
+          tokenDisplay.textContent = 'Aucun (Prêt à connecter)';
+          pipeDisplay.textContent = 'Par défaut ("default")';
+        }
+      } catch (err) {
+        console.warn('Erreur vérification statut CRM :', err);
       }
     }
 
-    async function testHubspotConnection() {
-      const token = document.getElementById('customHubspotToken').value.trim() || formState.tokenOverride;
-      const btn = document.getElementById('btnTestHubspot');
-      const resDiv = document.getElementById('hubspotTestResult');
-      
+    // 2. Enregistrer & Activer le Token pour TOUT le site
+    async function saveGlobalConfig() {
+      const token = document.getElementById('inputGlobalToken').value.trim();
+      const pipelineId = document.getElementById('inputPipelineId').value.trim() || 'default';
+      const btn = document.getElementById('btnSaveConfig');
+      const box = document.getElementById('configFeedbackBox');
+
+      if (!token) {
+        alert('Veuillez renseigner votre Private App Token HubSpot (commençant par pat-).');
+        return;
+      }
+
       btn.disabled = true;
-      btn.innerHTML = `<span class="animate-spin mr-1">⟳</span> Test en cours...`;
-      resDiv.classList.remove('hidden');
-      resDiv.textContent = 'Interrogation de l\'API HubSpot CRM v3...';
+      btn.innerHTML = `<span class="animate-spin mr-1.5">⟳</span> Validation & Enregistrement...`;
+      box.classList.remove('hidden');
+      box.textContent = '1. Interrogation et vérification des scopes HubSpot...\n2. Sauvegarde persistante pour tout le site...\n';
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, pipelineId, action: 'save' })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          box.textContent = `✅ SUCCÈS !\n• Statut : ${data.message}\n• Jeton Actif : ${data.maskedToken}\n• Pipelines disponibles : ${data.pipelinesCount}\n\n👉 Ce jeton est désormais actif pour TOUTES les connexions futures au site.`;
+          document.getElementById('inputGlobalToken').value = '';
+          checkGlobalCrmStatus();
+          alert('Félicitations ! Le jeton HubSpot a été validé et activé pour tout le site.');
+        } else {
+          box.textContent = `❌ ERREUR DE VALIDATION :\n${data.error || 'Erreur inconnue'}\n\n${data.hint || ''}`;
+        }
+      } catch (e) {
+        box.textContent = `❌ Erreur réseau lors de la communication serveur : ${e.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i><span>🚀 Enregistrer & Activer pour tout le site</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // 3. Tester sans sauvegarder
+    async function testGlobalConfig() {
+      const token = document.getElementById('inputGlobalToken').value.trim();
+      const btn = document.getElementById('btnTestConfig');
+      const box = document.getElementById('configFeedbackBox');
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-1">⟳</span> Test...`;
+      box.classList.remove('hidden');
+      box.textContent = 'Test de connexion en direct à l\'API HubSpot CRM v3...';
 
       try {
         const url = token ? `/api/test-hubspot?token=${encodeURIComponent(token)}` : '/api/test-hubspot';
-        const resp = await fetch(url);
-        const data = await resp.json();
-        resDiv.textContent = JSON.stringify(data, null, 2);
+        const res = await fetch(url);
+        const data = await res.json();
+        box.textContent = JSON.stringify(data, null, 2);
       } catch (e) {
-        resDiv.textContent = 'Erreur réseau lors du test : ' + e.message;
+        box.textContent = 'Erreur lors du test : ' + e.message;
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3 h-3"></i><span>Tester la connexion HubSpot</span>`;
+        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i><span>Tester sans sauvegarder</span>`;
         lucide.createIcons();
       }
+    }
+
+    // 4. Déconnecter
+    async function disconnectGlobalConfig() {
+      if (!confirm('Êtes-vous sûr de vouloir déconnecter le compte HubSpot du site ?')) return;
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'disconnect' })
+        });
+        const data = await res.json();
+        alert(data.message || 'Compte déconnecté.');
+        checkGlobalCrmStatus();
+      } catch (e) {
+        alert('Erreur déconnexion : ' + e.message);
+      }
+    }
+
+    function toggleTokenVisibility() {
+      const input = document.getElementById('inputGlobalToken');
+      const icon = document.getElementById('eyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
     }
   </script>
 </body>

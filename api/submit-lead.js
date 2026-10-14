@@ -48,13 +48,12 @@ export default async function handler(req, res) {
       surface
     });
 
-    // Token HubSpot : variable d'environnement ou override temporaire depuis l'UI pour test
-    const hubspotToken = tokenOverride || process.env.HUBSPOT_ACCESS_TOKEN;
-    const pipelineId = process.env.HUBSPOT_PIPELINE_ID || 'default';
+    // Récupération du token HubSpot (priorité : override UI > env Vercel > config persistante GitHub)
+    const { token: hubspotToken, pipelineId } = await getActiveHubspotConfig(tokenOverride);
 
     // 2. Si aucun token HubSpot n'est configuré : Mode Simulation Transparent
     if (!hubspotToken) {
-      console.log('⚠️ [HubSpot Mode Démo] Aucun HUBSPOT_ACCESS_TOKEN configuré. Simulation réussie.');
+      console.log('⚠️ [HubSpot Mode Démo] Aucun token HubSpot configuré. Simulation réussie.');
       
       return res.status(200).json({
         success: true,
@@ -390,3 +389,42 @@ function formatProjectAnswer(ans) {
   };
   return map[ans] || ans;
 }
+
+/**
+ * Récupère le token actif (Override > Env Vercel > Config persistante GitHub)
+ */
+async function getActiveHubspotConfig(tokenOverride) {
+  if (tokenOverride && tokenOverride.trim().length > 10) {
+    return { token: tokenOverride.trim(), pipelineId: process.env.HUBSPOT_PIPELINE_ID || 'default' };
+  }
+
+  if (process.env.HUBSPOT_ACCESS_TOKEN && process.env.HUBSPOT_ACCESS_TOKEN.trim().length > 10) {
+    return { token: process.env.HUBSPOT_ACCESS_TOKEN.trim(), pipelineId: process.env.HUBSPOT_PIPELINE_ID || 'default' };
+  }
+
+  // Lecture depuis le store persistant GitHub
+  const ghToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  if (ghToken) {
+    try {
+      const res = await fetch('https://api.github.com/repos/kevinmonin72/renov-confiance-form/contents/data/config.json?ref=main', {
+        headers: {
+          'Authorization': `token ${ghToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const content = Buffer.from(data.content, 'base64').toString('utf8');
+        const parsed = JSON.parse(content);
+        if (parsed.hubspotToken) {
+          return { token: parsed.hubspotToken, pipelineId: parsed.pipelineId || 'default' };
+        }
+      }
+    } catch (e) {
+      console.warn('Erreur lecture config persistante dans submit-lead:', e.message);
+    }
+  }
+
+  return { token: null, pipelineId: 'default' };
+}
+
