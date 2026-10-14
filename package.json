@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Formulaire d'acquisition interactif style Tally pour ArchiSimple connecté à l'API HubSpot avec détection intelligente du pipeline commercial.",
   "main": "api/submit-lead.js",
+  "type": "module",
   "scripts": {
     "start": "npx serve .",
     "test": "node api/test-hubspot.js"
