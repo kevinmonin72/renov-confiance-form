@@ -1,7 +1,7 @@
 {
-  "name": "renov-confiance-form",
+  "name": "archisimple-form",
   "version": "1.0.0",
-  "description": "Formulaire d'acquisition interactif style Tally pour Rénov.Confiance connecté à l'API HubSpot avec détection intelligente du pipeline commercial.",
+  "description": "Formulaire d'acquisition interactif style Tally pour ArchiSimple connecté à l'API HubSpot avec détection intelligente du pipeline commercial.",
   "main": "api/submit-lead.js",
   "scripts": {
     "start": "npx serve .",
@@ -16,7 +16,7 @@
     "tiers-de-confiance",
     "sales-pipeline"
   ],
-  "author": "Rénov.Confiance",
+  "author": "ArchiSimple",
   "license": "MIT",
   "dependencies": {}
 }

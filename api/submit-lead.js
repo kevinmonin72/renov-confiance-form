@@ -109,7 +109,7 @@ export default async function handler(req, res) {
       city: city.trim(),
       zip: postalCode.trim(),
       hs_lead_status: pipelineData.leadStatus,
-      message: `[Rénov.Confiance] Projet: ${propertyType} (${surface ? surface + 'm²' : 'N/C'}) - DPE: ${dpeRating} - Étape déduite: ${pipelineData.stageLabel}`
+      message: `[ArchiSimple] Projet: ${propertyType} (${surface ? surface + 'm²' : 'N/C'}) - DPE: ${dpeRating} - Étape déduite: ${pipelineData.stageLabel}`
     };
 
     const createContactRes = await fetch(hubspotUrl('/crm/v3/objects/contacts'), {
@@ -353,7 +353,7 @@ function computeStealthPipelineStage({ projectStageAnswer, timeframe, occupancyS
   }
 
   // Nom dynamique du Deal
-  const dealName = `[Rénov] ${dpeRating ? 'DPE ' + dpeRating : 'Passoire'} · ${surface ? surface + 'm²' : 'Logement'} · ${stageLabel.split('—')[0].trim()}`;
+  const dealName = `[ArchiSimple] ${dpeRating ? 'DPE ' + dpeRating : 'Passoire'} · ${surface ? surface + 'm²' : 'Logement'} · ${stageLabel.split('—')[0].trim()}`;
 
   // Libellé délai
   const timeframeLabels = {

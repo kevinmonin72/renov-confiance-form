@@ -1,6 +1,6 @@
-# 🏢 Rénov.Confiance — Formulaire d'Acquisition Interactif (Style Tally) & Synchronisation HubSpot CRM
+# 🏢 ArchiSimple — Formulaire d'Acquisition Interactif (Style Tally) & Synchronisation HubSpot CRM
 
-Interface d'acquisition de projets et de qualification de leads pour **Rénov Tiers de Confiance**, conçue selon l'expérience utilisateur épurée et immersive de **Tally / Typeform** et connectée directement à l'**API HubSpot CRM v3**.
+Interface d'acquisition de projets et de qualification de leads pour **ArchiSimple**, conçue selon l'expérience utilisateur épurée et immersive de **Tally / Typeform** et connectée directement à l'**API HubSpot CRM v3**.
 
 ---
 
@@ -24,7 +24,7 @@ L'étape exacte du cycle de vente dans **HubSpot Deals** est déduite intelligem
 
 ## 🎨 Direction Artistique & Expérience Utilisateur (UX)
 
-- **Identité Rénov.Confiance :** Typographies *Plus Jakarta Sans* et *Inter*, accents carmin/rouge pinot (`#E60023`), fonds ivoire doux et cartes contrastées.
+- **Identité ArchiSimple :** Typographies *Plus Jakarta Sans* et *Inter*, accents carmin/rouge pinot (`#E60023`), fonds ivoire doux et cartes contrastées.
 - **Expérience Tally fluide :**
   - Barre de progression dynamique supérieure avec indicateur de pourcentage en direct.
   - Cartes de questions centrées et aérées, sans distractions visuelles.
@@ -58,7 +58,7 @@ L'application est architecturée avec des fonctions serverless Node.js sur **Ver
    - Synthèse complète du projet dans la propriété `message`.
 
 2. **Objet Deal / Transaction (`/crm/v3/objects/deals`) :**
-   - `dealname` dynamique : `[Rénov] DPE G · 55m² · Devis Artisans Reçus`.
+   - `dealname` dynamique : `[ArchiSimple] DPE G · 55m² · Devis Artisans Reçus`.
    - `dealstage` : calculé automatiquement selon la matrice de maturité.
    - `amount` : calculé selon la fourchette de budget (ex: 38 000 €).
    - `closedate` : date d'échéance estimée (de 14 à 45 jours selon le degré d'urgence).
@@ -101,7 +101,7 @@ npx serve .
 
 1. Rendez-vous dans votre compte **HubSpot** > **Paramètres (icône roue crantée)**.
 2. Dans le menu de gauche, cliquez sur **Intégrations** > **Applications privées**.
-3. Cliquez sur **Créer une application privée** (nommez-la *"Rénov.Confiance Form"*).
+3. Cliquez sur **Créer une application privée** (nommez-la *"ArchiSimple Form"*).
 4. Dans l'onglet **Portées (Scopes)**, activez les droits suivants :
    - `crm.objects.contacts.read`
    - `crm.objects.contacts.write`
