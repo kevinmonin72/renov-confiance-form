@@ -1,0 +1,22 @@
+{
+  "name": "renov-confiance-form",
+  "version": "1.0.0",
+  "description": "Formulaire d'acquisition interactif style Tally pour Rénov.Confiance connecté à l'API HubSpot avec détection intelligente du pipeline commercial.",
+  "main": "api/submit-lead.js",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "node api/test-hubspot.js"
+  },
+  "keywords": [
+    "hubspot",
+    "tally",
+    "crm",
+    "form",
+    "renovation",
+    "tiers-de-confiance",
+    "sales-pipeline"
+  ],
+  "author": "Rénov.Confiance",
+  "license": "MIT",
+  "dependencies": {}
+}
