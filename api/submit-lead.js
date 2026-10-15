@@ -50,6 +50,9 @@ export default async function handler(req, res) {
 
     // 1. Détection intelligente de l'étape du pipeline commercial (SANS question explicite)
     const pipelineData = computeStealthPipelineStage({
+      firstname,
+      lastname,
+      city,
       projectStageAnswer,
       timeframe,
       occupancyStatus,
@@ -405,7 +408,7 @@ function saveLeadLocally(leadData) {
 /**
  * MAPPING INTELLIGENT DE L'ÉTAPE DU PIPELINE
  */
-function computeStealthPipelineStage({ projectStageAnswer, timeframe, occupancyStatus, dpeRating, budget, surface }) {
+function computeStealthPipelineStage({ firstname, lastname, city, projectStageAnswer, timeframe, occupancyStatus, dpeRating, budget, surface }) {
   let dealStage = 'appointmentscheduled';
   let leadStatus = 'OPEN';
   let stageLabel = 'Découverte & Diagnostic DPE';
@@ -470,7 +473,9 @@ function computeStealthPipelineStage({ projectStageAnswer, timeframe, occupancyS
       break;
   }
 
-  const dealName = `[ArchiSimple] ${dpeRating ? 'DPE ' + dpeRating : 'Passoire'} · ${surface ? surface + 'm²' : 'Logement'} · ${stageLabel.split('—')[0].trim()}`;
+  const clientLabel = (firstname || lastname) ? `${firstname} ${lastname}`.trim() : "Client ArchiSimple";
+  const cityLabel = city ? ` · ${city}` : " · Paris";
+  const dealName = `${clientLabel}${cityLabel} (DPE ${dpeRating || "G"} · ${surface ? surface + "m²" : "Rénovation"})`;
 
   const timeframeLabels = {
     'immediat': 'Moins de 30 jours (Urgent)',
