@@ -350,6 +350,33 @@ export default async function handler(req, res) {
     };
     saveLeadLocally(leadRecord);
 
+    // E. Transmission automatique au service d'expédition du devis par email
+    try {
+      const quoteMailerUrl = process.env.QUOTE_MAILER_URL || 'http://localhost:3005/api/quote';
+      fetch(quoteMailerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstname,
+          lastname,
+          email,
+          phone,
+          postalCode,
+          city,
+          propertyType,
+          occupancyStatus,
+          dpeRating,
+          surface,
+          projectStageAnswer,
+          amount: pipelineData.amount
+        })
+      }).catch(err => {
+        console.log('[Submit-Lead] Notification quote mailer async :', err.message);
+      });
+    } catch (errMailer) {
+      console.warn('[Submit-Lead] Erreur notification quote mailer :', errMailer.message);
+    }
+
     return res.status(200).json({
       success: true,
       simulated: isBypassed,
