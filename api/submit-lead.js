@@ -427,7 +427,7 @@ function computeStealthPipelineStage({ firstname, lastname, city, projectStageAn
 
   switch (projectStageAnswer) {
     case 'devis_recus':
-      dealStage = 'qualifiedtobuy';
+      dealStage = 'appointmentscheduled';
       leadStatus = 'IN_PROGRESS';
       stageLabel = 'Devis Artisans Reçus — Besoin Tiers Séquestre & Audit';
       priority = 'HIGH';
