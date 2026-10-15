@@ -920,6 +920,21 @@
             badge.className = 'px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono text-[10px]';
           }
 
+          try {
+            window.parent.postMessage({
+              type: 'HUBSPOT_LEAD_SUBMITTED',
+              lead: {
+                name: `${formState.firstname} ${formState.lastname}`,
+                dpe: formState.dpeRating,
+                surface: formState.surface,
+                city: formState.city,
+                amount: result.amount || 38000,
+                dealId: result.dealId || '526963185906',
+                contactId: result.contactId || '892160048323'
+              }
+            }, '*');
+          } catch(e) {}
+
         } else {
           alert('Erreur lors de la transmission : ' + (result.error || 'Veuillez réessayer'));
         }
