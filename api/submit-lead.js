@@ -371,18 +371,15 @@ export default async function handler(req, res) {
       });
       const emailContent = generateQuoteEmail(quote);
       
-      // Envoi asynchrone non-bloquant du devis
-      sendQuoteEmail({
+      // Attendre l'envoi de l'email pour garantir l'exécution complète sur Vercel
+      await sendQuoteEmail({
         to: email,
         subject: emailContent.subject,
         html: emailContent.html,
         text: emailContent.text,
         quoteReference: quote.quoteReference
-      }).then(mailRes => {
-        console.log(`[Submit-Lead] ✓ Devis ${quote.quoteReference} envoyé à ${email}`);
-      }).catch(errMail => {
-        console.warn('[Submit-Lead] Erreur envoi devis :', errMail.message);
       });
+      console.log(`[Submit-Lead] ✓ Devis ${quote.quoteReference} envoyé avec succès à ${email}`);
     } catch (errMailer) {
       console.warn('[Submit-Lead] Erreur génération devis :', errMailer.message);
     }
