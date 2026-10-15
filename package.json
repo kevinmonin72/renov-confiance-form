@@ -19,5 +19,7 @@
   ],
   "author": "ArchiSimple",
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {
+    "nodemailer": "^6.10.0"
+  }
 }

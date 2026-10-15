@@ -1,4 +1,7 @@
 import fs from 'fs';
+import { calculateRealQuote } from './lib/simulator.js';
+import { generateQuoteEmail } from './lib/template.js';
+import { sendQuoteEmail } from './lib/mailer.js';
 
 /**
  * Handler Serverless Vercel : Synchronisation HubSpot CRM v3
@@ -350,31 +353,38 @@ export default async function handler(req, res) {
     };
     saveLeadLocally(leadRecord);
 
-    // E. Transmission automatique au service d'expédition du devis par email
+    // E. Génération et Envoi Automatique du Devis Réel par Email (Gmail API / App Password)
     try {
-      const quoteMailerUrl = process.env.QUOTE_MAILER_URL || 'http://localhost:3005/api/quote';
-      fetch(quoteMailerUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstname,
-          lastname,
-          email,
-          phone,
-          postalCode,
-          city,
-          propertyType,
-          occupancyStatus,
-          dpeRating,
-          surface,
-          projectStageAnswer,
-          amount: pipelineData.amount
-        })
-      }).catch(err => {
-        console.log('[Submit-Lead] Notification quote mailer async :', err.message);
+      const quote = calculateRealQuote({
+        firstname,
+        lastname,
+        email,
+        phone,
+        postalCode,
+        city,
+        propertyType,
+        occupancyStatus,
+        dpeRating,
+        surface,
+        projectStageAnswer,
+        amount: pipelineData.amount
+      });
+      const emailContent = generateQuoteEmail(quote);
+      
+      // Envoi asynchrone non-bloquant du devis
+      sendQuoteEmail({
+        to: email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+        quoteReference: quote.quoteReference
+      }).then(mailRes => {
+        console.log(`[Submit-Lead] ✓ Devis ${quote.quoteReference} envoyé à ${email}`);
+      }).catch(errMail => {
+        console.warn('[Submit-Lead] Erreur envoi devis :', errMail.message);
       });
     } catch (errMailer) {
-      console.warn('[Submit-Lead] Erreur notification quote mailer :', errMailer.message);
+      console.warn('[Submit-Lead] Erreur génération devis :', errMailer.message);
     }
 
     return res.status(200).json({
